@@ -50,7 +50,7 @@ class TicTacToePage extends StatefulWidget {
 }
 
 class _TicTacToePageState extends State<TicTacToePage> {
-  Difficulty currentDifficulty = Difficulty.hard; // الافتراضي
+  Difficulty currentDifficulty = Difficulty.medium; 
   List<String> board = List.filled(9, '');
   final ai = TicTacToeMinimax();
   bool isGameOver = false;
@@ -62,7 +62,6 @@ class _TicTacToePageState extends State<TicTacToePage> {
       board[index] = ai.humanSymbol;
       if (ai.checkWinner(board) == null) {
         Future.delayed(const Duration(milliseconds: 300), () {
-          // نمرر المستوى الحالي للدالة
           int bestMove = ai.getBestMove(board, currentDifficulty);
           if (bestMove != -1) {
             setState(() {
@@ -89,7 +88,7 @@ class _TicTacToePageState extends State<TicTacToePage> {
         barrierDismissible: true,
         barrierLabel: "Game Over",
         pageBuilder: (context, anim1, anim2) {
-          return const SizedBox(); // Not used but required
+          return const SizedBox(); 
         },
         transitionBuilder: (context, anim1, anim2, child) {
           return Transform.scale(
@@ -112,7 +111,10 @@ class _TicTacToePageState extends State<TicTacToePage> {
                 ),
                 content: Text(
                   content,
-                  style: TextStyle(color: Colors.deepPurple.shade300, fontSize: 18.sp),
+                  style: TextStyle(
+                    color: Colors.deepPurple.shade300,
+                    fontSize: 18.sp,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 actions: [
@@ -135,7 +137,10 @@ class _TicTacToePageState extends State<TicTacToePage> {
                         ),
                         child: Text(
                           "العب مرة أخرى",
-                          style: TextStyle(fontSize: 16.sp, color: Colors.white),
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -181,15 +186,16 @@ class _TicTacToePageState extends State<TicTacToePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Tic Tac Toe AI"),
-      ),
+      appBar: AppBar(title: const Text("Tic Tac Toe AI")),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF3E5F5), Color(0xFFE1BEE7)], // Light purple gradient
+            colors: [
+              Color(0xFFF3E5F5),
+              Color(0xFFE1BEE7),
+            ], // Light purple gradient
           ),
         ),
         child: Stack(
@@ -197,9 +203,11 @@ class _TicTacToePageState extends State<TicTacToePage> {
             const Positioned.fill(child: SnowWidget()),
             Column(
               children: [
-                // أزرار اختيار المستوى
                 Container(
-                  margin: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
+                  margin: EdgeInsets.symmetric(
+                    vertical: 20.h,
+                    horizontal: 20.w,
+                  ),
                   padding: EdgeInsets.all(6.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -224,7 +232,6 @@ class _TicTacToePageState extends State<TicTacToePage> {
 
                 SizedBox(height: 50.h),
 
-                // الشبكة (Grid)
                 Expanded(
                   child: GridView.builder(
                     shrinkWrap: true,
@@ -276,9 +283,12 @@ class _TicTacToePageState extends State<TicTacToePage> {
                                                 : Colors.deepPurple,
                                             shadows: [
                                               Shadow(
-                                                color: board[index] == ai.aiSymbol
-                                                    ? Colors.purpleAccent.withAlpha(50)
-                                                    : Colors.deepPurple.withAlpha(50),
+                                                color:
+                                                    board[index] == ai.aiSymbol
+                                                    ? Colors.purpleAccent
+                                                          .withAlpha(50)
+                                                    : Colors.deepPurple
+                                                          .withAlpha(50),
                                                 blurRadius: 10.r,
                                               ),
                                             ],
@@ -415,13 +425,13 @@ class TicTacToeMinimax {
 
     switch (difficulty) {
       case Difficulty.easy:
-        threshold = 20; // 20% ذكاء
+        threshold = 20; 
         break;
       case Difficulty.medium:
-        threshold = 50; // 50% ذكاء
+        threshold = 50;
         break;
       case Difficulty.hard:
-        threshold = 100; // 100% ذكاء
+        threshold = 100;
         break;
     }
 
@@ -475,7 +485,8 @@ class SnowWidget extends StatefulWidget {
   State<SnowWidget> createState() => _SnowWidgetState();
 }
 
-class _SnowWidgetState extends State<SnowWidget> with SingleTickerProviderStateMixin {
+class _SnowWidgetState extends State<SnowWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final List<Snowflake> _snowflakes = [];
   final Random _random = Random();
@@ -484,12 +495,14 @@ class _SnowWidgetState extends State<SnowWidget> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(seconds: 1))..addListener(() {
-      setState(() {
-        _updateSnowflakes();
-      });
-    })..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..addListener(() {
+            setState(() {
+              _updateSnowflakes();
+            });
+          })
+          ..repeat();
   }
 
   void _initSnowflakes(Size size) {
@@ -499,9 +512,9 @@ class _SnowWidgetState extends State<SnowWidget> with SingleTickerProviderStateM
         Snowflake(
           _random.nextDouble() * size.width,
           _random.nextDouble() * size.height,
-          _random.nextDouble() * 2 + 1, // radius 1-3
-          _random.nextDouble() * 2 + 1, // speed 1-3
-          _random.nextDouble() * 0.5 + 0.2, // opacity 0.2-0.7
+          _random.nextDouble() * 2 + 1, 
+          _random.nextDouble() * 2 + 1, 
+          _random.nextDouble() * 0.5 + 0.2, 
         ),
       );
     }
@@ -531,10 +544,7 @@ class _SnowWidgetState extends State<SnowWidget> with SingleTickerProviderStateM
     if (!_initialized && size.width > 0) {
       _initSnowflakes(size);
     }
-    return CustomPaint(
-      size: Size.infinite,
-      painter: SnowPainter(_snowflakes),
-    );
+    return CustomPaint(size: Size.infinite, painter: SnowPainter(_snowflakes));
   }
 }
 
@@ -547,7 +557,12 @@ class SnowPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var flake in snowflakes) {
       final paint = Paint()
-        ..color = Colors.white.withAlpha((flake.opacity * 255).toInt())
+        ..color = const Color.fromARGB(
+          255,
+          192,
+          2,
+          244,
+        ).withAlpha((flake.opacity * 300).toInt())
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(flake.x, flake.y), flake.radius, paint);
     }
