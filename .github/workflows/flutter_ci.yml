@@ -1,0 +1,82 @@
+name: Flutter CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Cache Flutter SDK
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flutter-sdk
+          key: ${{ runner.os }}-flutter-stable
+
+      - name: Set up Flutter (with cache/upgrade)
+        run: |
+          if [ ! -d "$HOME/.flutter-sdk" ]; then
+            echo "Flutter SDK not found in cache. Cloning..."
+            git clone https://github.com/flutter/flutter.git -b stable $HOME/.flutter-sdk
+          else
+            echo "Using cached Flutter SDK. Upgrading..."
+            $HOME/.flutter-sdk/bin/flutter upgrade --force
+          fi
+          echo "$HOME/.flutter-sdk/bin" >> $GITHUB_PATH
+          $HOME/.flutter-sdk/bin/flutter --version
+
+      - name: Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Cache Android SDK components (NDK, CMake, platforms)
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk/ndk
+            /usr/local/lib/android/sdk/cmake
+            /usr/local/lib/android/sdk/platforms
+          key: ${{ runner.os }}-android-sdk
+          restore-keys: |
+            ${{ runner.os }}-android-sdk
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code analysis
+        run: flutter analyze
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk

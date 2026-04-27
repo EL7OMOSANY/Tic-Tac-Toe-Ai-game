@@ -1,0 +1,158 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  packages: write
+  actions: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Cache Flutter SDK
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flutter-sdk
+          key: ${{ runner.os }}-flutter-stable
+
+      - name: Set up Flutter (with cache/upgrade)
+        run: |
+          if [ ! -d "$HOME/.flutter-sdk" ]; then
+            echo "Flutter SDK not found in cache. Cloning..."
+            git clone https://github.com/flutter/flutter.git -b stable $HOME/.flutter-sdk
+          else
+            echo "Using cached Flutter SDK. Upgrading..."
+            $HOME/.flutter-sdk/bin/flutter upgrade --force
+          fi
+          echo "$HOME/.flutter-sdk/bin" >> $GITHUB_PATH
+          $HOME/.flutter-sdk/bin/flutter --version
+
+      - name: Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Cache Android SDK components (NDK, CMake, platforms)
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk/ndk
+            /usr/local/lib/android/sdk/cmake
+            /usr/local/lib/android/sdk/platforms
+          key: ${{ runner.os }}-android-sdk
+          restore-keys: |
+            ${{ runner.os }}-android-sdk
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code analysis
+        run: flutter analyze
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: release-${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: true
+
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} 
+          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
+          asset_name: app-release.apk
+          asset_content_type: application/vnd.android.package-archive
+
+  upload_appetize:
+    name: Upload to Appetize
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-apk
+          path: ./artifact
+
+      - name: Upload APK to Appetize (update existing app)
+        env:
+          APPETIZE_API_KEY: "${{ secrets.APPETIZE_API_KEY }}"
+          APPETIZE_PUBLIC_KEY: "${{ secrets.APPETIZE_PUBLIC_KEY }}"
+        run: |
+          if [ -z "${APPETIZE_API_KEY}" ] || [ -z "${APPETIZE_PUBLIC_KEY}" ]; then
+            echo "Missing APPETIZE_API_KEY or APPETIZE_PUBLIC_KEY secret. Skipping upload.";
+            exit 0;
+          fi
+
+          APK_PATH=artifact/app-release.apk
+
+          if [ ! -f "${APK_PATH}" ]; then
+            echo "APK not found at ${APK_PATH}";
+            exit 1;
+          fi
+
+          echo "Uploading ${APK_PATH} to Appetize (publicKey=${APPETIZE_PUBLIC_KEY})..."
+
+          response=$(curl -s -w "\n%{http_code}" -X POST "https://api.appetize.io/v1/apps/${APPETIZE_PUBLIC_KEY}" \
+            -H "X-API-KEY: ${APPETIZE_API_KEY}" \
+            -F "file=@${APK_PATH}" \
+            -F "platform=android")
+
+          # Separate body and status
+          http_body=$(echo "$response" | sed '$d')
+          http_status=$(echo "$response" | tail -n1)
+
+          echo "Appetize response status: $http_status"
+          echo "Appetize response body: $http_body"
+
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+            echo "Appetize upload succeeded.";
+          else
+            echo "Appetize upload failed with status $http_status";
+            exit 1;
+          fi
