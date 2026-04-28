@@ -1,18 +1,7 @@
-# mashro3
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# Tic-Tac-Toe-Ai-game
+🚀 AI-Powered Tic Tac Toe (Flutter)A modern, responsive, and "smart" Tic Tac Toe game built with Flutter. The app features a custom-built AI opponent using the Minimax Algorithm with Alpha-Beta Pruning, ensuring a challenging experience across different difficulty levels.✨ FeaturesSmart AI Opponent: Uses the Minimax algorithm to predict moves and play optimally.Difficulty Levels: * 🟢 Easy: AI makes random moves 80% of the time.🟡 Medium: A 50/50 mix of smart and random moves.🔴 Hard: The AI plays optimally (Unbeatable).Responsive UI: Powered by flutter_screenutil to ensure a perfect look on all screen sizes.Fluid Animations: * Elastic scaling animations for X and O markers.Custom-painted Snowfall Effect background for a premium feel.Smooth transitions and animated containers.Modern Aesthetics: Deep purple theme with gradients, soft shadows, and clean typography.🧠 The Brain: Minimax & Alpha-Beta PruningThe core of this project is the TicTacToeMinimax class. It explores the entire game tree to find the best move.How it works:Minimax: The AI simulates every possible move, then every possible response by the player, recursively.Scoring: * Win: $+10 - depth$ (Prefers faster wins).Loss: $depth - 10$ (Prefers delaying losses).Tie: $0$.Alpha-Beta Pruning: Optimized the search by skipping branches that won't affect the final decision, making the AI's calculation near-instant.🛠 Tech StackFramework: FlutterLanguage: DartPackages:flutter_screenutil: For adaptive UI/UX.dart:math: For AI logic and randomizations.🚀 Getting StartedPrerequisitesFlutter SDK installed.An Android/iOS emulator or a physical device.
+📂 Project StructurePlaintextlib/
+├── main.dart             # Entry point & Theme configuration
+├── tic_tac_toe_page.dart # Main Game UI & State Management
+├── minimax_logic.dart    # AI Algorithm (Minimax + Alpha-Beta)
+└── snow_widget.dart      # Custom Painter for the background effect
+🎮 How to PlaySelect your preferred Difficulty from the top bar.You play as 'O' and the AI plays as 'X'.Try to align three symbols horizontally, vertically, or diagonally.If you choose Hard, prepare for a challenge—you probably won't win! ;)🤝 ContributingContributions, issues, and feature requests are welcome! Feel free to check the issues page.📜 LicenseThis project is MIT licensed.👨‍💻 Developed by Mohmmed ayman and Alaa rehab Feel free to reach out for any inquiries or collaborations!
